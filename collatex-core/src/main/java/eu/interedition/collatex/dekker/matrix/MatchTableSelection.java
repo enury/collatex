@@ -72,8 +72,8 @@ public class MatchTableSelection {
    * Island will be part of the final alignment
    */
   public void addIsland(Island isl) {
-    if (LOG.isLoggable(Level.FINE)) {
-      LOG.log(Level.FINE, "adding island: '{0}'", isl);
+    if (LOG.isLoggable(Level.FINER)) {
+      LOG.log(Level.FINER, "adding island: '{0}'", isl);
     }
     for (Coordinate coordinate : isl) {
       fixedRows.add(coordinate.row);
@@ -154,7 +154,7 @@ public class MatchTableSelection {
     while(possibleIslands.isEmpty()&&!islandMultimap.isEmpty()) {
       // find the maximum island size and traverse groups in descending order
       Integer max = Collections.max(islandMultimap.keySet());
-      LOG.fine("Checking islands of size: "+max);
+      LOG.finer("Checking islands of size: "+max);
       // check the possible islands of a certain size against 
       // the already committed islands.
       removeOrSplitImpossibleIslands(max, islandMultimap);

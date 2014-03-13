@@ -71,8 +71,8 @@ public interface CollationAlgorithm {
       Preconditions.checkArgument(!Iterables.isEmpty(witnessTokens), "Empty witness");
       final Witness witness = Iterables.getFirst(witnessTokens, null).getWitness();
 
-      if (LOG.isLoggable(Level.FINE)) {
-        LOG.log(Level.FINE, "{0} + {1}: Merge comparand into graph", new Object[] { into, witness });
+      if (LOG.isLoggable(Level.FINER)) {
+        LOG.log(Level.FINER, "{0} + {1}: Merge comparand into graph", new Object[] { into, witness });
       }
       witnessTokenVertices = Maps.newHashMap();
       VariantGraph.Vertex last = into.getStart();
@@ -82,8 +82,8 @@ public interface CollationAlgorithm {
         if (matchingVertex == null) {
           matchingVertex = into.add(token);
         } else {
-          if (LOG.isLoggable(Level.FINE)) {
-            LOG.log(Level.FINE, "Match: {0} to {1}", new Object[] { matchingVertex, token });
+          if (LOG.isLoggable(Level.FINER)) {
+            LOG.log(Level.FINER, "Match: {0} to {1}", new Object[] { matchingVertex, token });
           }
           matchingVertex.add(Collections.singleton(token));
         }

@@ -19,40 +19,6 @@
 
 package eu.interedition.collatex.cli;
 
-import com.google.common.base.Function;
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-import com.google.common.io.Closeables;
-import com.google.common.io.Closer;
-import com.google.common.io.Files;
-import eu.interedition.collatex.CollationAlgorithm;
-import eu.interedition.collatex.CollationAlgorithmFactory;
-import eu.interedition.collatex.Token;
-import eu.interedition.collatex.VariantGraph;
-import eu.interedition.collatex.io.CollateXModule;
-import eu.interedition.collatex.simple.SimpleCollation;
-import eu.interedition.collatex.jung.JungVariantGraph;
-import eu.interedition.collatex.matching.EqualityTokenComparator;
-import eu.interedition.collatex.simple.SimplePatternTokenizer;
-import eu.interedition.collatex.simple.SimpleToken;
-import eu.interedition.collatex.simple.SimpleTokenNormalizers;
-import eu.interedition.collatex.simple.SimpleVariantGraphSerializer;
-import eu.interedition.collatex.simple.SimpleWitness;
-import org.apache.commons.cli.CommandLine;
-import org.apache.commons.cli.GnuParser;
-import org.apache.commons.cli.HelpFormatter;
-import org.apache.commons.cli.Options;
-import org.apache.commons.cli.ParseException;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.xml.sax.SAXException;
-
-import javax.script.ScriptException;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamWriter;
-import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
-import javax.xml.xpath.XPathFactory;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -65,6 +31,47 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.Comparator;
 import java.util.List;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.LogManager;
+import java.util.logging.Logger;
+
+import javax.script.ScriptException;
+import javax.xml.stream.XMLOutputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamWriter;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathExpressionException;
+import javax.xml.xpath.XPathFactory;
+
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.GnuParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.xml.sax.SAXException;
+
+import com.google.common.base.Function;
+import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
+import com.google.common.io.Closeables;
+import com.google.common.io.Closer;
+import com.google.common.io.Files;
+
+import eu.interedition.collatex.CollationAlgorithm;
+import eu.interedition.collatex.CollationAlgorithmFactory;
+import eu.interedition.collatex.Token;
+import eu.interedition.collatex.VariantGraph;
+import eu.interedition.collatex.io.CollateXModule;
+import eu.interedition.collatex.jung.JungVariantGraph;
+import eu.interedition.collatex.matching.EditDistanceTokenComparator;
+import eu.interedition.collatex.simple.SimpleCollation;
+import eu.interedition.collatex.simple.SimplePatternTokenizer;
+import eu.interedition.collatex.simple.SimpleToken;
+import eu.interedition.collatex.simple.SimpleTokenNormalizers;
+import eu.interedition.collatex.simple.SimpleVariantGraphSerializer;
+import eu.interedition.collatex.simple.SimpleWitness;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
@@ -106,7 +113,7 @@ public class Engine implements Closeable {
 
       this.tokenizer = Objects.firstNonNull(pluginScript.tokenizer(), SimplePatternTokenizer.BY_WS_OR_PUNCT);
       this.normalizer = Objects.firstNonNull(pluginScript.normalizer(), SimpleTokenNormalizers.LC_TRIM_WS);
-      this.comparator = Objects.firstNonNull(pluginScript.comparator(), new EqualityTokenComparator());
+      this.comparator = Objects.firstNonNull(pluginScript.comparator(), new EditDistanceTokenComparator(3));
     } catch (IOException e) {
       throw new ParseException("Failed to read script '" + script + "' - " + e.getMessage());
     }
@@ -124,6 +131,13 @@ public class Engine implements Closeable {
 
     this.joined = !commandLine.hasOption("t");
 
+    // turn on logging..
+    ConsoleHandler handler = new ConsoleHandler();
+    handler.setLevel(Level.FINER);
+    Logger globalLogger = LogManager.getLogManager().getLogger("");
+    globalLogger.setLevel(Level.FINE);
+    globalLogger.addHandler(handler);
+    
     this.outputFormat = commandLine.getOptionValue("f", "json").toLowerCase();
 
     outputCharset = Charset.forName(commandLine.getOptionValue("oe", "UTF-8"));

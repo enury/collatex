@@ -21,10 +21,12 @@ package eu.interedition.collatex.matching;
 
 import com.google.common.collect.Iterables;
 import com.google.common.collect.ListMultimap;
+
 import eu.interedition.collatex.AbstractTest;
 import eu.interedition.collatex.Token;
 import eu.interedition.collatex.VariantGraph;
 import eu.interedition.collatex.simple.SimpleWitness;
+
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -41,4 +43,12 @@ public class NearMatcherTest extends AbstractTest {
     assertEquals(w[0].getTokens().get(0), Iterables.getFirst(Iterables.get(matches.get(w[1].getTokens().get(0)), 0).tokens(), null));
     assertEquals(w[0].getTokens().get(1), Iterables.getFirst(Iterables.get(matches.get(w[1].getTokens().get(1)), 0).tokens(), null));
   }
+  
+  @Test
+  public void nearTokenMatchingDavidBirnbaum() {
+    String w1 = "фрк0";
+    String w2 = "фрц0";
+    assertEquals(1, EditDistance.compute(w1, w2));
+  }
+
 }
