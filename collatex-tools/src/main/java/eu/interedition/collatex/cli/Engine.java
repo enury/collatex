@@ -66,6 +66,7 @@ import eu.interedition.collatex.VariantGraph;
 import eu.interedition.collatex.io.CollateXModule;
 import eu.interedition.collatex.jung.JungVariantGraph;
 import eu.interedition.collatex.matching.EditDistanceTokenComparator;
+import eu.interedition.collatex.matching.EqualityTokenComparator;
 import eu.interedition.collatex.simple.SimpleCollation;
 import eu.interedition.collatex.simple.SimplePatternTokenizer;
 import eu.interedition.collatex.simple.SimpleToken;
@@ -75,6 +76,7 @@ import eu.interedition.collatex.simple.SimpleWitness;
 
 /**
  * @author <a href="http://gregor.middell.net/" title="Homepage">Gregor Middell</a>
+ * @author Ronald Haentjens Dekker
  */
 public class Engine implements Closeable {
 
@@ -105,6 +107,13 @@ public class Engine implements Closeable {
     this.xmlMode = commandLine.hasOption("xml");
     this.tokenXPath = XPathFactory.newInstance().newXPath().compile(commandLine.getOptionValue("xp", "//text()"));
 
+    //check levensthein and threshold options
+    Comparator<Token> selectedComparator = null;
+    if (commandLine.hasOption("levensthein")) {
+      int threshold = Integer.parseInt(commandLine.getOptionValue("threshold", "2"));
+      selectedComparator = new EditDistanceTokenComparator(threshold);
+    }
+    
     final String script = commandLine.getOptionValue("s");
     try {
       final PluginScript pluginScript = (script == null
@@ -113,7 +122,7 @@ public class Engine implements Closeable {
 
       this.tokenizer = Objects.firstNonNull(pluginScript.tokenizer(), SimplePatternTokenizer.BY_WS_OR_PUNCT);
       this.normalizer = Objects.firstNonNull(pluginScript.normalizer(), SimpleTokenNormalizers.LC_TRIM_WS);
-      this.comparator = Objects.firstNonNull(pluginScript.comparator(), new EditDistanceTokenComparator(3));
+      this.comparator = coalesce(pluginScript.comparator(), selectedComparator, new EqualityTokenComparator());
     } catch (IOException e) {
       throw new ParseException("Failed to read script '" + script + "' - " + e.getMessage());
     }
@@ -132,12 +141,14 @@ public class Engine implements Closeable {
     this.joined = !commandLine.hasOption("t");
 
     // turn on logging..
-    ConsoleHandler handler = new ConsoleHandler();
-    handler.setLevel(Level.FINER);
-    Logger globalLogger = LogManager.getLogManager().getLogger("");
-    globalLogger.setLevel(Level.FINE);
-    globalLogger.addHandler(handler);
-    
+    if (commandLine.hasOption("verbose")) {
+      ConsoleHandler handler = new ConsoleHandler();
+      handler.setLevel(Level.FINER);
+      Logger globalLogger = LogManager.getLogManager().getLogger("");
+      globalLogger.setLevel(Level.FINE);
+      globalLogger.addHandler(handler);
+    }
+
     this.outputFormat = commandLine.getOptionValue("f", "json").toLowerCase();
 
     outputCharset = Charset.forName(commandLine.getOptionValue("oe", "UTF-8"));
@@ -290,8 +301,15 @@ public class Engine implements Closeable {
     OPTIONS.addOption("t", "tokenized", false, "consecutive matches of tokens will *not* be joined to segments");
     OPTIONS.addOption("f", "format", true, "result/output format: 'json', 'csv', 'dot', 'graphml', 'tei'");
     OPTIONS.addOption("s", "script", true, "ECMA/JavaScript resource with functions to be plugged into the alignment algorithm");
+    OPTIONS.addOption("l", "levensthein", false, "enable levensthein near matching");
+    OPTIONS.addOption("lt", "threshold", true, "set the levensthein treshold; default is 2");
+    OPTIONS.addOption("v", "verbose", false, "make the collator more chatty");
   }
 
+  private static <T> T coalesce(T a, T b, T c) {
+    return a != null ? a : (b != null ? b : c);
+  }
+  
   @Override
   public void close() throws IOException {
       final Closer closer = Closer.create();
