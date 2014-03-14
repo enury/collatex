@@ -4,10 +4,10 @@
     <parent>
         <groupId>eu.interedition</groupId>
         <artifactId>collatex</artifactId>
-        <version>1.6-SNAPSHOT</version>
+        <version>1.5.2-SNAPSHOT</version>
     </parent>
     <artifactId>collatex-nodeps</artifactId>
-    <version>1.6-SNAPSHOT</version>
+    <version>1.5.2-SNAPSHOT</version>
     <name>CollateX NoDeps</name>
     <description>CollateX Uber Jar for use with the Python bindings</description>
     <dependencies>
